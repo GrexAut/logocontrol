@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<settings>
+		<plc id="myLogo" type="Logo7" ip="0.0.0.0" />
+		<httpWebservice port="8088" />
+		<httpsWebservice port="8080" username="" passwordHash="" hashSalt="" /><!-- generate your SHA1 password hash here: http://www.sha1generator.de -->
+		<valueTextConverter>
+			<!-- Verschiedene Konverter zur Überführung von Value (ganzzahliger Rohwert aus der Logo) in ValueText (Anzeigewert für den Benutzer) -->
+			<textMapping id="an_aus">
+				<!-- Text-Mapping für aus (0) und an (1) -->
+				<valueText value="0" text="aus" />
+				<valueText value="1" text="an" />
+			</textMapping>
+			<textMapping id="rollo">
+				<!-- Text-Mapping für Rolläden -->
+				<valueText value="0" text="geschlossen" />
+				<valueText value="1" text="mittel" />
+				<valueText value="2" text="offen" />
+			</textMapping>
+			<textMapping id="auf_zu">
+				<!-- Text-Mapping für Tür-/Fensterkontakte -->
+				<valueText value="0" text="zu" />
+				<valueText value="1" text="auf" />
+			</textMapping>
+			<calculation id="minsec">
+				<!-- Analogwert zu/von Zeitwert (Bsp: 4873 zu 81:13) -->
+				<valueToText calculation="{Floor([value]/60)}:{if([value]%60>9,'','0')}{[value]%60}" />
+				<textToValue valueParseRegex="(\d+):(\d+)" calculation="{[value1]*60+[value2]}" />
+			</calculation>
+			<calculation id="time">
+				<!-- Analogwert zu/von Uhrzeit (4873 zu 13:09) -->
+				<valueToText calculation="{Floor(LogoDec2Hex([value])/100)}:{if(LogoDec2Hex([value])%100>9,'','0')}{LogoDec2Hex([value])%100}" />
+				<textToValue valueParseRegex="(\d+):(\d+)" calculation="{LogoHex2Dec([value1]*100+[value2])}" />
+			</calculation>
+		</valueTextConverter>
+	</settings>
+	<infrastructure>
+		<group name="Dachgeschoss">
+			<group name="Schlafzimmer">
+				<device id="1" name="Licht" type="light">
+					<attribute id="1" name="Status" plc="myLogo" address="Q1" valueTextConverter="an_aus" />
+					<method id="1" name="on" plc="myLogo" address="150.0" />
+					<method id="2" name="off" plc="myLogo" address="150.1" />
+				</device>
+				<device id="2" name="Rollladen" type="shutter">
+					<attribute id="1" name="Status" plc="myLogo" address="106" datatype="dword" valueTextConverter="rollo" />
+					<method id="1" name="open" plc="myLogo" address="150.2" />
+					<method id="2" name="close" plc="myLogo" address="150.3" />
+				</device>
+				<device id="3" name="Fensterkontakt">
+					<attribute id="1" name="Status" plc="myLogo" address="I4" valueTextConverter="auf_zu" />
+				</device>
+				<device id="4" name="Temperatur">
+					<attribute id="1" name="Soll" plc="myLogo" address="151" datatype="word" gain="0.1" />
+					<attribute id="2" name="Ist" plc="myLogo" address="AI1" gain="0.1" />
+				</device>
+			</group>
+		</group>
+	</infrastructure>
+</configuration>
